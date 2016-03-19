@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--Created:cb85b80c-f585-40ff-8bfc-12ff4d0e34a9-->
+<App xmlns="http://schemas.microsoft.com/sharepoint/2012/app/manifest" Name="First-App" ProductID="{cb492ae8-a56c-41c4-a222-3ed0bf48cf92}" Version="1.0.0.0" SharePointMinVersion="16.0.0.0">
+  <Properties>
+    <Title>First-App</Title>
+    <StartPage>https://localhost:44300/?{StandardTokens}</StartPage>
+    <InstalledEventEndpoint>https://addinfirstbus-ns.servicebus.windows.net/580970454/1998943122/obj/d3ee540f-8422-423a-b741-4593a65941db/Services/AppEventReceiver.svc</InstalledEventEndpoint>
+  </Properties>
+  <AppPrincipal>
+    <AutoDeployedWebApplication>
+      <DebugInfo ClientSecret="EfTORknZYxz+mkgBLN+VwzcYGQpj+Rjv4RhqWRXkNzQ=" AppUrl="https://localhost:44300/;https://addinfirstbus-ns.servicebus.windows.net/580970454/1998943122/obj/d3ee540f-8422-423a-b741-4593a65941db/" />
+    </AutoDeployedWebApplication>
+  </AppPrincipal>
+  <AppPermissionRequests>
+    <AppPermissionRequest Scope="http://sharepoint/content/sitecollection/web" Right="Manage" />
+  </AppPermissionRequests>
+</App>

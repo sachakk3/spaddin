@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Elements xmlns="http://schemas.microsoft.com/sharepoint/">
+  <Receivers ListTemplateId="100">
+    <Receiver>
+      <Name>RemoteEventReceiverFirstItemAdded</Name>
+      <Type>ItemAdded</Type>
+      <SequenceNumber>10000</SequenceNumber>
+      <Url>~remoteAppUrl/Services/RemoteEventReceiverFirst.svc</Url>
+    </Receiver>
+    <Receiver>
+      <Name>RemoteEventReceiverFirstItemUpdated</Name>
+      <Type>ItemUpdated</Type>
+      <SequenceNumber>10000</SequenceNumber>
+      <Url>~remoteAppUrl/Services/RemoteEventReceiverFirst.svc</Url>
+    </Receiver>
+  </Receivers>
+</Elements>
