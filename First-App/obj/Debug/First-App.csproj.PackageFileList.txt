@@ -1,1 +1,0 @@
-bin\Debug\First-App.wsp

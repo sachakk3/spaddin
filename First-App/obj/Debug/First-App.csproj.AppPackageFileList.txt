@@ -1,1 +1,0 @@
-E:\_VS\Azure\spaddin\First-App\bin\Debug\app.publish\1.0.0.0\First-App.app

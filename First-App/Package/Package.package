@@ -1,6 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<package xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" dslVersion="1.0.0.0" Id="05600e43-9271-4d83-8bb7-18e5a86763b0" solutionId="05600e43-9271-4d83-8bb7-18e5a86763b0" resetWebServer="false" sharePointProductVersion="16.0" name="First-App" xmlns="http://schemas.microsoft.com/VisualStudio/2008/SharePointTools/PackageModel">
-  <features>
-    <featureReference itemId="857496ec-8203-490f-9638-736c5c95a6fd" />
-  </features>
-</package>
