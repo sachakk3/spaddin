@@ -68,7 +68,7 @@ namespace First_AppWeb.Controllers
                       EventReceiverType.ItemAdded,
                       EventReceiverSynchronization.Asynchronous,
                       "RERHostReceiver",
-                      "",
+                      "https://addinmvc.azurewebsites.net/Services/RemoteEventReceiverFirst.svc",
                           10);
                 }
             }

@@ -22,7 +22,7 @@
     <WorkflowPartId>{2afa5a7d-4c1a-4316-b7d8-391966954256}</WorkflowPartId>
     <CspkgPartId>{1b4547f5-6365-4c50-aa62-8dfc28683f54}</CspkgPartId>
     <SqlPackagePartId>{3c2bc915-2aed-4339-93ad-d6c2cbba166e}</SqlPackagePartId>
-    <ActivePublishProfile>AddInMVC - Web Deploy</ActivePublishProfile>
+    <ActivePublishProfile>AddInMVC - Web Deploy %282%29</ActivePublishProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>

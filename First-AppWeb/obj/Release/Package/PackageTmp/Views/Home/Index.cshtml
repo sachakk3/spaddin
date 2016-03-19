@@ -24,3 +24,14 @@
         <p><a class="btn btn-default" href="http://go.microsoft.com/fwlink/?LinkID=294441">Learn more &raquo;</a></p>
     </div>
 </div>
+<div class="row">
+    @using (Html.BeginForm("Subscribe", "Home", new { SPHostUrl = Request.QueryString["SPHostUrl"] }))
+    {
+        @Html.AntiForgeryToken()
+        <div class="col-md-10">
+            @Html.DropDownList("listTitle", (IEnumerable<SelectListItem>)ViewBag.HostLists)
+            <input type="submit" value="Subscribe" />
+        </div>
+    }
+</div>
+  

@@ -207,7 +207,9 @@
     <Content Include="Content\Site.css" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
+    <None Include="Properties\PublishProfiles\AddInMVC - FTP %282%29.pubxml" />
     <None Include="Properties\PublishProfiles\AddInMVC - FTP.pubxml" />
+    <None Include="Properties\PublishProfiles\AddInMVC - Web Deploy %282%29.pubxml" />
     <None Include="Properties\PublishProfiles\AddInMVC - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\sp-first-add-in.pubxml" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />

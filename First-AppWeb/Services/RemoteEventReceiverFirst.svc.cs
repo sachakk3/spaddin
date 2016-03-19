@@ -22,7 +22,14 @@ namespace First_AppWeb.Services
             {
                 if (clientContext != null)
                 {
-                    clientContext.Load(clientContext.Web);
+                    Web web = clientContext.Web;                   
+                    clientContext.Load(web);
+                    clientContext.ExecuteQuery();
+
+
+                    web.Title = web.Title + 1;
+                    web.Update();
+                    clientContext.Load(web);
                     clientContext.ExecuteQuery();
                 }
             }
@@ -40,7 +47,14 @@ namespace First_AppWeb.Services
             {
                 if (clientContext != null)
                 {
-                    clientContext.Load(clientContext.Web);
+                    Web web = clientContext.Web;
+                    clientContext.Load(web);
+                    clientContext.ExecuteQuery();
+
+
+                    web.Title = web.Title + 1;
+                    web.Update();
+                    clientContext.Load(web);
                     clientContext.ExecuteQuery();
                 }
             }

@@ -1,1 +1,1 @@
-https://localhost:44300/
+https://addinmvc.azurewebsites.net

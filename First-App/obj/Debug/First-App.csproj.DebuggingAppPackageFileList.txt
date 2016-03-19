@@ -1,1 +1,1 @@
-D:\Projects\Azure\First-Add-In\First-App\bin\Debug\First-App.debugapp
+E:\_VS\Azure\spaddin\First-App\bin\Debug\First-App.debugapp
