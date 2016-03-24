@@ -30,8 +30,8 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Services
                 case SPRemoteEventType.ItemAdded:
                     HandleItemAdded(properties);
                     break;
-                case SPRemoteEventType.ItemAdding:
-                    HandleItemAdding(properties);
+                case SPRemoteEventType.ItemUpdated:
+                    HandleItemUpdated(properties);
                     break;
             }
 
@@ -99,14 +99,14 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Services
                 }
             }
         }
-        private void HandleItemAdding(SPRemoteEventProperties properties)
+        private void HandleItemUpdated(SPRemoteEventProperties properties)
         {
             using (ClientContext clientContext =
                 TokenHelper.CreateRemoteEventReceiverClientContext(properties))
             {
                 if (clientContext != null)
                 {
-                    new RemoteEventReceiverManager().ItemAddingToListEventHandler(clientContext, properties);
+                    new RemoteEventReceiverManager().ItemUpdatedToListEventHandler(clientContext, properties);
                 }
             }
         }
