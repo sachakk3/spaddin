@@ -117,7 +117,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
         public void ItemUpdatedToListEventHandler(ClientContext clientContext, SPRemoteEventProperties properties) {
             try
             {
-                MoveItem(clientContext, properties.ItemEventProperties.ListId, properties.ItemEventProperties.ListItemId);
+                //MoveItem(clientContext, properties.ItemEventProperties.ListId, properties.ItemEventProperties.ListItemId);
             }
             catch (Exception oops)
             {
@@ -183,6 +183,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
 
         }
         private void SetPermissionsToFolder(ClientContext clientContext, string projectInternalName)
+        { }
         private string GetProjectInternalName(ClientContext clientContext, string ts_ProjectsLookup)
         {
             return "Project1";
