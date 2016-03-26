@@ -99,12 +99,6 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Services
                 }
             }
         }
-
-        /// <summary>
-        /// Handles the ItemAdded event by modifying the Description
-        /// field of the item.
-        /// </summary>
-        /// <param name="properties"></param>
         private void HandleItemUpdated(SPRemoteEventProperties properties)
         {
             using (ClientContext clientContext =

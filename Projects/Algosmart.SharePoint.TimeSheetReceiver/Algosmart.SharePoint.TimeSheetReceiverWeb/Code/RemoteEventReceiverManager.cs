@@ -14,35 +14,34 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
         private const string LIST_TITLE = "timeboard";
 
         private const string RECEIVER_ADDED_NAME = "ItemAddedEvent";
+        private const string RECEIVER_ADDING_NAME = "ItemAddingEvent";
         private const string RECEIVER_UPDATED_NAME = "ItemUpdatedEvent";
-        private const string LIST_TIMESHEET_ROOTFOLDER = "timeboard";
+
 
         public void AssociateRemoteEventsToHostWeb(ClientContext clientContext)
         {
-            //clientContext.Load(clientContext.Web.Lists);
+            //Get the Title and EventReceivers lists
             clientContext.Load(clientContext.Web.Lists,
                 lists => lists.Include(
                     list => list.Title,
-                    list => list.EventReceivers,
-                    list => list.RootFolder).Where
+                    list => list.EventReceivers).Where
                         (list => list.Title == LIST_TITLE));
 
             clientContext.ExecuteQuery();
 
             List timeSheetList = clientContext.Web.Lists.FirstOrDefault();
-            //List timeSheetList = clientContext.Web.Lists.Where(l=>l.RootFolder.Name)
 
             if (!IsReseiverExists(timeSheetList, RECEIVER_ADDED_NAME))
             {
-                this.AddReceiverToList(timeSheetList, RECEIVER_ADDED_NAME,EventReceiverType.ItemAdded,EventReceiverSynchronization.Synchronous);
+                this.AddReceiverToList(timeSheetList, RECEIVER_ADDED_NAME, EventReceiverType.ItemAdded, EventReceiverSynchronization.Synchronous);
             }
             if (!IsReseiverExists(timeSheetList, RECEIVER_UPDATED_NAME))
             {
-                this.AddReceiverToList(timeSheetList, RECEIVER_UPDATED_NAME, EventReceiverType.ItemUpdated, EventReceiverSynchronization.Asynchronous);
+                this.AddReceiverToList(timeSheetList, RECEIVER_UPDATED_NAME, EventReceiverType.ItemUpdated, EventReceiverSynchronization.Synchronous);
             }
             clientContext.ExecuteQuery();
         }
-        
+
         public void RemoveEventReceiversFromHostWeb(ClientContext clientContext)
         {
             List myList = clientContext.Web.Lists.GetByTitle(LIST_TITLE);
@@ -55,8 +54,14 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
                 e => e.ReceiverName == RECEIVER_UPDATED_NAME).FirstOrDefault();
             try
             {
-                rerAdded.DeleteObject();
-                rerUpdated.DeleteObject();
+                if (rerAdded != null)
+                {
+                    rerAdded.DeleteObject();
+                }
+                if (rerUpdated != null)
+                {
+                    rerUpdated.DeleteObject();
+                }
                 clientContext.ExecuteQuery();
 
             }
@@ -65,42 +70,32 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
                 System.Diagnostics.Trace.WriteLine(oops.Message);
             }
         }
-        public void ItemUpdatedToListEventHandler(ClientContext clientContext, SPRemoteEventProperties properties)
-        {
-        }
+
         public void ItemAddedToListEventHandler(ClientContext clientContext, SPRemoteEventProperties properties)
         {
             try
             {
-                Web web = clientContext.Web;
-                List timeSheets = web.Lists.GetById(properties.ItemEventProperties.ListId);
 
+                List timeSheets = clientContext.Web.Lists.GetById(properties.ItemEventProperties.ListId);
                 ListItem item = timeSheets.GetItemById(properties.ItemEventProperties.ListItemId);
                 clientContext.Load(timeSheets.RootFolder);
                 clientContext.Load(item);
                 clientContext.ExecuteQuery();
-                string folderUrl = string.Format("Project1/{0}/{1}", DateTime.Now.Year, DateTime.Now.Month);
 
-
-                string folderUrlFull = timeSheets.RootFolder.ServerRelativeUrl + "/" + folderUrl;
-                Folder itemTimeSheetsFolder = web.GetFolderByServerRelativeUrl(folderUrlFull);
-                if (!itemTimeSheetsFolder.ExistsInList(timeSheets))
+                string ts_ProjectsLookup = item["ts_ProjectsLookup"] + "";
+                if (!string.IsNullOrEmpty(ts_ProjectsLookup))
                 {
-                    timeSheets.CreateFolderInList(clientContext, folderUrl);
-                }
-                string itemPath = item["FileRef"] + "";
-                File file = web.GetFileByServerRelativeUrl(itemPath);
-                clientContext.Load(file);
-                clientContext.ExecuteQuery();
-                if (file.Exists)
-                {
-                    var filePath = string.Format("{0}/{1}/{2}_.000", timeSheets.RootFolder.ServerRelativeUrl, folderUrl, item.Id);
-                    file.MoveTo(filePath, MoveOperations.Overwrite);
-                }
-                clientContext.Load(file);
-                clientContext.ExecuteQuery();
+                    string projectInternalName = GetProjectInternalName(clientContext, ts_ProjectsLookup);
+                    string folderUrl = string.Format("{0}/{1}/{2}", projectInternalName, DateTime.Now.Year, DateTime.Now.Month);
+                    string folderUrlFull = timeSheets.RootFolder.ServerRelativeUrl + "/" + folderUrl;
 
-
+                    bool isNewFolder = EnsureFolder(clientContext, timeSheets, item, folderUrl, folderUrlFull);
+                    if (isNewFolder)
+                    {
+                        SetPermissions(clientContext, projectInternalName);
+                    }
+                    MoveItem(clientContext, timeSheets, item, folderUrl, folderUrlFull);
+                }
             }
             catch (Exception oops)
             {
@@ -108,31 +103,21 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
             }
 
         }
-        public void ItemAddingToListEventHandler(ClientContext clientContext, SPRemoteEventProperties properties) {
+        private bool EnsureFolder(ClientContext clientContext, List list, ListItem item, string folderUrl, string folderUrlFull)
+        {
+            bool isNewFolder = false;
+            Folder itemFolder = clientContext.Web.GetFolderByServerRelativeUrl(folderUrlFull);
+            if (!itemFolder.ExistsInList(list))
+            {
+                list.CreateFolderInList(clientContext, folderUrl);
+                isNewFolder = true;
+            }
+            return isNewFolder;
+        }    
+        public void ItemUpdatedToListEventHandler(ClientContext clientContext, SPRemoteEventProperties properties) {
             try
             {
-                //Web web = clientContext.Web;
-                //List timeSheets = web.Lists.GetById(properties.ItemEventProperties.ListId);
-                
-                //clientContext.Load(timeSheets.RootFolder);                
-                //clientContext.ExecuteQuery();
-                //string folderUrl = string.Format("Project1/{0}/{1}", DateTime.Now.Year, DateTime.Now.Month);
-
-
-                //string folderUrlFull = timeSheets.RootFolder.ServerRelativeUrl + "/" + folderUrl;
-                //Folder itemTimeSheetsFolder = web.GetFolderByServerRelativeUrl(folderUrlFull);
-                //if (!itemTimeSheetsFolder.ExistsInList(timeSheets))
-                //{
-                //    timeSheets.CreateFolderInList(clientContext, folderUrl);
-                //}
-                ////string itemPath = properties.ItemEventProperties.BeforeProperties["FileRef"] + "";
-                ////var filePath = string.Format("{0}/{1}_.000", folderUrl, item.Id);
-                //properties.ItemEventProperties.AfterProperties["FileDirRef"] = folderUrl;
-                ////["FileRef"] = filePath;
-                ////item.Update();
-                //clientContext.ExecuteQuery();
-
-                
+                //MoveItem(clientContext, properties.ItemEventProperties.ListId, properties.ItemEventProperties.ListItemId);
             }
             catch (Exception oops)
             {
@@ -169,6 +154,39 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
                 }
             }
             return isExists;
+        }
+        private void MoveItem(ClientContext clientContext, List timeSheets, ListItem item, string folderUrl,string folderUrlFull)
+        {             
+            string folderUrlItem = item["FileDirRef"] + "";
+            if (folderUrlFull != folderUrlItem)
+            {                
+                string itemPath = item["FileRef"] + "";
+                File file = clientContext.Web.GetFileByServerRelativeUrl(itemPath);
+                clientContext.Load(file);
+                clientContext.ExecuteQuery();
+                if (file.Exists)
+                {
+                    var filePath = string.Format("{0}/{1}/{2}_.000", timeSheets.RootFolder.ServerRelativeUrl, folderUrl, item.Id);
+                    file.MoveTo(filePath, MoveOperations.Overwrite);
+                }
+                clientContext.Load(file);
+                clientContext.ExecuteQuery();
+            }
+        }
+        private void SetPermissions(ClientContext clientContext, string projectInternalName)
+        {
+            string prjPMGroupName = string.Format("{0}-PM", projectInternalName);
+            string prjTeamGroupName = string.Format("{0}-Team", projectInternalName);
+
+
+
+
+        }
+        private void SetPermissionsToFolder(ClientContext clientContext, string projectInternalName)
+        { }
+        private string GetProjectInternalName(ClientContext clientContext, string ts_ProjectsLookup)
+        {
+            return "Project1";
         }
     }
 }
