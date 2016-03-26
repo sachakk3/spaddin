@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{10B31232-7371-486B-AC29-4A566D64206F}</ProjectGuid>
+    <ProjectGuid>{D1BC6EFD-544F-47BD-9EBA-73596E1C3971}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Algosmart.SharePoint.TimeSheetReceiver</RootNamespace>
@@ -17,11 +17,11 @@
     <MinimumOfficeToolsVersion>12.2</MinimumOfficeToolsVersion>
     <IncludeAssemblyInPackage>False</IncludeAssemblyInPackage>
     <ProjectMode>SharePointApp</ProjectMode>
-    <AppFeaturePartId>{47fa6145-eba0-4ea8-b9b3-59f12114c537}</AppFeaturePartId>
-    <WspPartId>{3b1183ef-6535-4dd4-a565-df4691ab7781}</WspPartId>
-    <WorkflowPartId>{05df1172-1d2b-4638-a2b6-04acdb14ae62}</WorkflowPartId>
-    <CspkgPartId>{fdf42742-474d-493c-8463-983939657d86}</CspkgPartId>
-    <SqlPackagePartId>{ed69bde4-2df1-4c53-9bd0-17d558973cf6}</SqlPackagePartId>
+    <AppFeaturePartId>{54b22e56-6b29-4e1d-b6b6-448b4bf2e429}</AppFeaturePartId>
+    <WspPartId>{2105c0fa-fa4c-4b2f-ab00-fb504c781f9c}</WspPartId>
+    <WorkflowPartId>{5b158e1e-b67a-4213-8fbc-fe86e016c28a}</WorkflowPartId>
+    <CspkgPartId>{e1a02234-447a-4230-9f1b-88fdfb802e1d}</CspkgPartId>
+    <SqlPackagePartId>{d02eed11-9c5d-4450-85a6-0596d9d9732d}</SqlPackagePartId>
     <ActivePublishProfile>AddInMVC - Web Deploy</ActivePublishProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -55,7 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Algosmart.SharePoint.TimeSheetReceiverWeb\Algosmart.SharePoint.TimeSheetReceiverWeb.csproj">
-      <Project>{52E5CE8D-1B9A-4315-BEF7-A57AB9E6A8F7}</Project>
+      <Project>{243C0CAE-1596-4E3C-81C1-4B9C47D4FF92}</Project>
       <Name>Algosmart.SharePoint.TimeSheetReceiverWeb</Name>
       <Private>True</Private>
       <RoleType>Web</RoleType>

@@ -1,38 +1,43 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
 using Microsoft.SharePoint.Client;
 
 namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
 {
     public static class Helper
     {
-        public static string CreateFolderInList(this List list, ClientContext context, string itemFolderPath)
+        public static bool ShouldSecretBeUpdated(IReadOnlyDictionary<string, object> beforeProperties,  IReadOnlyDictionary<string, object> afterProperties)
         {
-            Web web = context.Web;
-            string[] foldersName = itemFolderPath.Split(new[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
-            context.Load(list.RootFolder);
-            context.ExecuteQuery();
-            string curNewFolderPath = list.RootFolder.ServerRelativeUrl;
-            string curParentFolderPath = curNewFolderPath;
-
-            foreach (string folder in foldersName)
+            // If the property doesn't exist, then the secret should be updated
+            if (!beforeProperties.ContainsKey("CMIsSecret") || !afterProperties.ContainsKey("CMIsSecret"))
             {
-                curNewFolderPath += "/" + folder;
-                Folder folderObj = web.GetFolderByServerRelativeUrl(curNewFolderPath);
-                if (!folderObj.ExistsInList(list))
-                {
-                    ListItemCreationInformation listItemCreationInformation = new ListItemCreationInformation();
-                    listItemCreationInformation.UnderlyingObjectType = FileSystemObjectType.Folder;
-                    listItemCreationInformation.FolderUrl = curParentFolderPath;
-                    ListItem newFolderItem = list.AddItem(listItemCreationInformation);
-                    newFolderItem["Title"] = folder;
-                    newFolderItem.Update();
-                    context.ExecuteQuery();
-                }
-                curParentFolderPath += "/" + folder;
+                return true;
             }
-            if (itemFolderPath.Substring(0, 1) == "/")
-                return list.RootFolder.ServerRelativeUrl + itemFolderPath;
-            return list.RootFolder.ServerRelativeUrl + "/" + itemFolderPath;
+            //// If the value of IsSecret differ, then secret should be updated
+            return afterProperties["CMIsSecret"].ToString() != beforeProperties["CMIsSecret"].ToString();
+        }
+        public static RoleDefinitionBindingCollection GetRoleContribute(ClientContext clientContext)
+        {
+            RoleDefinitionBindingCollection collRolePMDefinitionBinding = new RoleDefinitionBindingCollection(clientContext);
+            //set role type
+            collRolePMDefinitionBinding.Add(clientContext.Web.RoleDefinitions.GetByType(RoleType.Contributor));
+            return collRolePMDefinitionBinding;
+        }
+        public static RoleDefinitionBindingCollection GetRoleReader(ClientContext clientContext)
+        {
+            RoleDefinitionBindingCollection collRoleDefinitionBinding = new RoleDefinitionBindingCollection(clientContext);
+            //set role type
+            collRoleDefinitionBinding.Add(clientContext.Web.RoleDefinitions.GetByType(RoleType.Reader));
+            return collRoleDefinitionBinding;
+        }
+        public static RoleDefinitionBindingCollection GetRoleFullControl(ClientContext clientContext)
+        {
+            RoleDefinitionBindingCollection collRoleDefinitionBinding = new RoleDefinitionBindingCollection(clientContext);
+            //set role type
+            collRoleDefinitionBinding.Add(clientContext.Web.RoleDefinitions.GetByType(RoleType.Administrator));
+            return collRoleDefinitionBinding;
         }
         public static bool ExistsInList(this Folder folder, List list)
         {
@@ -46,6 +51,16 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
             {
                 return false;
             }
+        }
+
+        public static Group CreateGroup(ClientContext clientContext, string groupName)
+        {
+            GroupCreationInformation inform = new GroupCreationInformation();
+            inform.Title = groupName;
+            Group group = clientContext.Web.SiteGroups.Add(inform);            
+            clientContext.Load(group);
+            clientContext.ExecuteQuery();
+            return group;
         }
     }
 }

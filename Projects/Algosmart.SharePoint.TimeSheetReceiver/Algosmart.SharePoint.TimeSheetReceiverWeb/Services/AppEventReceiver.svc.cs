@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Algosmart.SharePoint.TimeSheetReceiverWeb.Code;
 using Microsoft.SharePoint.Client;
 using Microsoft.SharePoint.Client.EventReceivers;
+using Algosmart.SharePoint.TimeSheetReceiverWeb.Code;
 
 namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Services
 {
@@ -26,13 +26,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Services
                     break;
                 case SPRemoteEventType.AppUninstalling:
                     HandleAppUninstalling(properties);
-                    break;
-                case SPRemoteEventType.ItemAdded:
-                    HandleItemAdded(properties);
-                    break;
-                case SPRemoteEventType.ItemUpdated:
-                    HandleItemUpdated(properties);
-                    break;
+                    break;               
             }
 
             return result;
@@ -44,16 +38,17 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Services
         /// <param name="properties">Unused.</param>
         public void ProcessOneWayEvent(SPRemoteEventProperties properties)
         {
-            
+            switch (properties.EventType)
+            {
+                
+                case SPRemoteEventType.ItemAdded:
+                    HandleTimeSheetEvents(properties);
+                    break;
+                case SPRemoteEventType.ItemUpdated:
+                    HandleTimeSheetEvents(properties);
+                    break;
+            }
         }
-        /// <summary>
-        /// Handles when an app is installed.  Activates a feature in the
-        /// host web.  The feature is not required.  
-        /// Next, if the Jobs list is
-        /// not present, creates it.  Finally it attaches a remote event
-        /// receiver to the list.  
-        /// </summary>
-        /// <param name="properties"></param>
         private void HandleAppInstalled(SPRemoteEventProperties properties)
         {
             using (ClientContext clientContext =
@@ -65,12 +60,6 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Services
                 }
             }
         }
-
-        /// <summary>
-        /// Removes the remote event receiver from the list and 
-        /// adds a new item to the list.
-        /// </summary>
-        /// <param name="properties"></param>
         private void HandleAppUninstalling(SPRemoteEventProperties properties)
         {
             using (ClientContext clientContext =
@@ -82,31 +71,20 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Services
                 }
             }
         }
+        private void HandleTimeSheetEvents(SPRemoteEventProperties properties)
+        {
+            using (ClientContext clientContext = TokenHelper.CreateRemoteEventReceiverClientContext(properties))
+            {
+                if (clientContext != null)
+                {
+                    //var afterProperties = properties.ItemEventProperties.AfterProperties;
+                    //var beforeProperties = properties.ItemEventProperties.BeforeProperties;
 
-        /// <summary>
-        /// Handles the ItemAdded event by modifying the Description
-        /// field of the item.
-        /// </summary>
-        /// <param name="properties"></param>
-        private void HandleItemAdded(SPRemoteEventProperties properties)
-        {
-            using (ClientContext clientContext =
-                TokenHelper.CreateRemoteEventReceiverClientContext(properties))
-            {
-                if (clientContext != null)
-                {
-                    new RemoteEventReceiverManager().ItemAddedToListEventHandler(clientContext, properties);
-                }
-            }
-        }
-        private void HandleItemUpdated(SPRemoteEventProperties properties)
-        {
-            using (ClientContext clientContext =
-                TokenHelper.CreateRemoteEventReceiverClientContext(properties))
-            {
-                if (clientContext != null)
-                {
-                    new RemoteEventReceiverManager().ItemUpdatedToListEventHandler(clientContext, properties);
+                    //if (Helper.ShouldSecretBeUpdated(beforeProperties, afterProperties))
+                    //{
+                        new RemoteEventReceiverManager().ItemHandleListEventHandler(clientContext, properties.ItemEventProperties.ListId, properties.ItemEventProperties.ListItemId, properties.EventType);
+
+                   // }
                 }
             }
         }

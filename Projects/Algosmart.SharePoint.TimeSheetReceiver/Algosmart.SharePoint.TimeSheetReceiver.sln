@@ -1,13 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Algosmart.SharePoint.TimeSheetReceiver", "Algosmart.SharePoint.TimeSheetReceiver\Algosmart.SharePoint.TimeSheetReceiver.csproj", "{10B31232-7371-486B-AC29-4A566D64206F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Algosmart.SharePoint.TimeSheetReceiver", "Algosmart.SharePoint.TimeSheetReceiver\Algosmart.SharePoint.TimeSheetReceiver.csproj", "{D1BC6EFD-544F-47BD-9EBA-73596E1C3971}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Algosmart.SharePoint.TimeSheetReceiverWeb", "Algosmart.SharePoint.TimeSheetReceiverWeb\Algosmart.SharePoint.TimeSheetReceiverWeb.csproj", "{52E5CE8D-1B9A-4315-BEF7-A57AB9E6A8F7}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsoleApplication", "TestConsoleApplication\TestConsoleApplication.csproj", "{59CBE2B5-8B86-422F-BC42-152C16BE14B8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Algosmart.SharePoint.TimeSheetReceiverWeb", "Algosmart.SharePoint.TimeSheetReceiverWeb\Algosmart.SharePoint.TimeSheetReceiverWeb.csproj", "{243C0CAE-1596-4E3C-81C1-4B9C47D4FF92}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,20 +13,16 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{10B31232-7371-486B-AC29-4A566D64206F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{10B31232-7371-486B-AC29-4A566D64206F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{10B31232-7371-486B-AC29-4A566D64206F}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
-		{10B31232-7371-486B-AC29-4A566D64206F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{10B31232-7371-486B-AC29-4A566D64206F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{10B31232-7371-486B-AC29-4A566D64206F}.Release|Any CPU.Deploy.0 = Release|Any CPU
-		{52E5CE8D-1B9A-4315-BEF7-A57AB9E6A8F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{52E5CE8D-1B9A-4315-BEF7-A57AB9E6A8F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{52E5CE8D-1B9A-4315-BEF7-A57AB9E6A8F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{52E5CE8D-1B9A-4315-BEF7-A57AB9E6A8F7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{59CBE2B5-8B86-422F-BC42-152C16BE14B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{59CBE2B5-8B86-422F-BC42-152C16BE14B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{59CBE2B5-8B86-422F-BC42-152C16BE14B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{59CBE2B5-8B86-422F-BC42-152C16BE14B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D1BC6EFD-544F-47BD-9EBA-73596E1C3971}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1BC6EFD-544F-47BD-9EBA-73596E1C3971}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1BC6EFD-544F-47BD-9EBA-73596E1C3971}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{D1BC6EFD-544F-47BD-9EBA-73596E1C3971}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1BC6EFD-544F-47BD-9EBA-73596E1C3971}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D1BC6EFD-544F-47BD-9EBA-73596E1C3971}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{243C0CAE-1596-4E3C-81C1-4B9C47D4FF92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{243C0CAE-1596-4E3C-81C1-4B9C47D4FF92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{243C0CAE-1596-4E3C-81C1-4B9C47D4FF92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{243C0CAE-1596-4E3C-81C1-4B9C47D4FF92}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
