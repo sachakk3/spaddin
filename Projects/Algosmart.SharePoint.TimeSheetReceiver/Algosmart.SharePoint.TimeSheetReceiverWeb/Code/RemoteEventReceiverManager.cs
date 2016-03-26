@@ -11,35 +11,30 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
 {
     public class RemoteEventReceiverManager
     {
-        private const string LIST_TITLE = "CustomList";
+        private const string LIST_TITLE = "timeboard";
 
         private const string RECEIVER_ADDED_NAME = "ItemAddedEvent";
-        private const string RECEIVER_ADDING_NAME = "ItemAddingEvent";
         private const string RECEIVER_UPDATED_NAME = "ItemUpdatedEvent";
-        
+        private const string LIST_TIMESHEET_ROOTFOLDER = "timeboard";
 
         public void AssociateRemoteEventsToHostWeb(ClientContext clientContext)
         {
             //clientContext.Load(clientContext.Web.Lists);
-            //Get the Title and EventReceivers lists
-
             clientContext.Load(clientContext.Web.Lists,
                 lists => lists.Include(
-                    list => list.Title,                   
-                    list => list.EventReceivers).Where
-                        (list => list.Id == new Guid("{58041B6F-AFF5-45BD-8BC3-1940366C66A7}")));
+                    list => list.Title,
+                    list => list.EventReceivers,
+                    list => list.RootFolder).Where
+                        (list => list.Title == LIST_TITLE));
 
             clientContext.ExecuteQuery();
 
             List timeSheetList = clientContext.Web.Lists.FirstOrDefault();
+            //List timeSheetList = clientContext.Web.Lists.Where(l=>l.RootFolder.Name)
 
             if (!IsReseiverExists(timeSheetList, RECEIVER_ADDED_NAME))
             {
-                this.AddReceiverToList(timeSheetList, RECEIVER_ADDED_NAME,EventReceiverType.ItemAdded,EventReceiverSynchronization.Asynchronous);
-            }
-            if (!IsReseiverExists(timeSheetList, RECEIVER_ADDING_NAME))
-            {
-                this.AddReceiverToList(timeSheetList, RECEIVER_ADDING_NAME, EventReceiverType.ItemAdding, EventReceiverSynchronization.Synchronous);
+                this.AddReceiverToList(timeSheetList, RECEIVER_ADDED_NAME,EventReceiverType.ItemAdded,EventReceiverSynchronization.Synchronous);
             }
             if (!IsReseiverExists(timeSheetList, RECEIVER_UPDATED_NAME))
             {
@@ -70,7 +65,9 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
                 System.Diagnostics.Trace.WriteLine(oops.Message);
             }
         }
-
+        public void ItemUpdatedToListEventHandler(ClientContext clientContext, SPRemoteEventProperties properties)
+        {
+        }
         public void ItemAddedToListEventHandler(ClientContext clientContext, SPRemoteEventProperties properties)
         {
             try

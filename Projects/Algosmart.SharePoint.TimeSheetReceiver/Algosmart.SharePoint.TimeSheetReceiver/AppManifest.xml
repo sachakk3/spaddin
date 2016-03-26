@@ -3,12 +3,12 @@
 <App xmlns="http://schemas.microsoft.com/sharepoint/2012/app/manifest"
      Name="AlgosmartSharePointTimeSheetReceiver"
      ProductID="{d65f60ac-f3cd-4cda-a2ee-6a85dd9cab0a}"
-     Version="1.0.0.0"
+     Version="1.0.0.1"
      SharePointMinVersion="16.0.0.0"
 >
   <Properties>
     <Title>Algosmart.SharePoint.TimeSheetReceiver</Title>
-    <StartPage>~remoteAppUrl/?{StandardTokens}</StartPage>
+    <StartPage>~remoteAppUrl?{StandardTokens}</StartPage>
     <InstalledEventEndpoint>~remoteAppUrl/Services/AppEventReceiver.svc</InstalledEventEndpoint>
     <UninstallingEventEndpoint>~remoteAppUrl/Services/AppEventReceiver.svc</UninstallingEventEndpoint>
   </Properties>
@@ -16,7 +16,7 @@
   <AppPrincipal>
     <RemoteWebApplication ClientId="*" />
   </AppPrincipal>
-  <AppPermissionRequests>
-    <AppPermissionRequest Scope="http://sharepoint/content/sitecollection/web" Right="Manage" />
+  <AppPermissionRequests AllowAppOnlyPolicy="false">
+    <AppPermissionRequest Scope="http://sharepoint/content/sitecollection/web" Right="FullControl" />
   </AppPermissionRequests>
 </App>
