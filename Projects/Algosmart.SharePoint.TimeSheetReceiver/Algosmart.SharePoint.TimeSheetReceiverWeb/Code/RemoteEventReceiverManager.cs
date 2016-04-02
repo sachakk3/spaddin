@@ -12,15 +12,15 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
     public class RemoteEventReceiverManager
     {
         //Опц: Вынести в класс Const.*
-        private const string LIST_TITLE = "timeboard";
-
+        private const string LIST_TITLE = "Записи табеля";
+        
         private const string RECEIVER_ADDED_NAME = "ItemAddedEvent";
         private const string RECEIVER_UPDATED_NAME = "ItemUpdatedEvent";
 
         private const string GROUPS_OWNER_TITLE = "Backoffice - Владельцы";
         private const string GROUPS_BOSS_TITLE = "Backoffice-Boss";
 
-        private const string WEBS_FINANCE_NAME = "Finance";
+        private const string WEBS_FINANCE_NAME = "/Finance";
         private const string LISTS_RATES_TITLE = "UserByProjectDetails";
         
         private const string FIELDS_PROJECTS_LOOKUP = "ts_ProjectsLookup";
@@ -32,7 +32,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
         public void ItemHandleListEventHandler(ClientContext clientContext, Guid ListId, int ListItemId, SPRemoteEventType eventType)
         {
             try
-            {
+            {                
                 List timeSheets = clientContext.Web.Lists.GetById(ListId);
                 ListItem item = timeSheets.GetItemById(ListItemId);
                 clientContext.Load(timeSheets.RootFolder);
@@ -44,7 +44,8 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
                 if (ts_ProjectsLookup != null)
                 {
                     FieldUserValue userCreated = item[FIELDS_AUTHOR] as FieldUserValue;
-                    string projectInternalName = GetProjectInternalName(clientContext, timeSheets, ts_ProjectsLookup);
+                    Web parentWeb = GetParentWeb(clientContext);
+                    string projectInternalName = GetProjectInternalName(clientContext, parentWeb, timeSheets, ts_ProjectsLookup);
                     if (!string.IsNullOrEmpty(projectInternalName))
                     {
                         List<SPTSFolder> folders = InitializeFolders(projectInternalName, userCreated.LookupValue);
@@ -63,7 +64,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
                         MoveItem(clientContext, timeSheets, item, folderUrlFull);
                         if (eventType == SPRemoteEventType.ItemAdded)
                         {
-                            string rate = GetRateFromRatesList(clientContext, ts_ProjectsLookup, userCreated);
+                            string rate = GetRateFromRatesList(clientContext, parentWeb, ts_ProjectsLookup, userCreated);
                             double rateNumber = double.Parse(rate);
                             item[FIELDS_RATE] = rateNumber;
                             item.Update();
@@ -90,11 +91,20 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
             }
 
         }
-       
-        private static string GetRateFromRatesList(ClientContext clientContext, FieldLookupValue ts_ProjectsLookup, FieldUserValue userCreated)
+        private static Web GetParentWeb(ClientContext clientContext)
+        {
+            WebInformation webParentInfo = clientContext.Web.ParentWeb;
+            clientContext.Load(webParentInfo);
+            clientContext.ExecuteQuery();
+            Web parentWeb = clientContext.Site.OpenWebById(webParentInfo.Id);
+            clientContext.Load(parentWeb);
+            clientContext.ExecuteQuery();
+            return parentWeb;
+        }
+        private static string GetRateFromRatesList(ClientContext clientContext, Web parentWeb, FieldLookupValue ts_ProjectsLookup, FieldUserValue userCreated)
         {
             string rate = string.Empty;
-            Web web = clientContext.Site.OpenWeb(WEBS_FINANCE_NAME);
+            Web web = clientContext.Site.OpenWeb(parentWeb.ServerRelativeUrl + WEBS_FINANCE_NAME);
             List detailsList = web.Lists.GetByTitle(LISTS_RATES_TITLE);
             CamlQuery query = new CamlQuery();
             query.ViewXml = "<View>"
@@ -240,7 +250,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
         }
         private static void SetPermissionsForProjectFolder(ClientContext clientContext, SPTSFolder folder, Group groupPM, Group groupTeam, Group groupOwner, Group groupBoss)
         {
-            folder.Folder.BreakRoleInheritance(false, false);
+            RemoveAllRoleAssignments(clientContext, folder);
 
             RoleDefinitionBindingCollection collRoleOwnerDefinitionBinding = Helper.GetRoleFullControl(clientContext);
             folder.Folder.RoleAssignments.Add(groupOwner, collRoleOwnerDefinitionBinding);
@@ -253,9 +263,21 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
             folder.Folder.RoleAssignments.Add(groupTeam, collRoleUserDefinitionBinding);
             clientContext.ExecuteQuery();
         }
-        private static void SetPermissionsForUserFolder(ClientContext clientContext, SPTSFolder folder, Group groupPM, Group groupTeam, Group groupOwner, Group groupBoss)
+        private static void RemoveAllRoleAssignments(ClientContext clientContext, SPTSFolder folder)
         {
             folder.Folder.BreakRoleInheritance(false, false);
+            RoleAssignmentCollection roleAssignments = folder.Folder.RoleAssignments;
+            clientContext.Load(roleAssignments);
+            clientContext.ExecuteQuery();
+
+            for (int i = folder.Folder.RoleAssignments.Count - 1; i >= 0; i--)
+            {
+                folder.Folder.RoleAssignments[i].DeleteObject();
+            }
+        }
+        private static void SetPermissionsForUserFolder(ClientContext clientContext, SPTSFolder folder, Group groupPM, Group groupTeam, Group groupOwner, Group groupBoss)
+        {
+            RemoveAllRoleAssignments(clientContext, folder);
 
             RoleDefinitionBindingCollection collRoleOwnerDefinitionBinding = Helper.GetRoleFullControl(clientContext);
             folder.Folder.RoleAssignments.Add(groupOwner, collRoleOwnerDefinitionBinding);
@@ -267,10 +289,11 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
             folder.Folder.RoleAssignments.Add(groupTeam, collRoleDefinitionBinding);
             clientContext.ExecuteQuery();
         }
-        private static string GetProjectInternalName(ClientContext clientContext, List timeSheets, FieldLookupValue ts_ProjectsLookupValue)
+        private static string GetProjectInternalName(ClientContext clientContext, Web parentWeb, List timeSheets, FieldLookupValue ts_ProjectsLookupValue)
         {
             FieldLookup ts_ProjectsLookup = (FieldLookup)timeSheets.Fields.Where(f => f.InternalName == FIELDS_PROJECTS_LOOKUP).FirstOrDefault();
-            List projects = clientContext.Site.RootWeb.Lists.GetById(new Guid(ts_ProjectsLookup.LookupList));
+            
+            List projects = parentWeb.Lists.GetById(new Guid(ts_ProjectsLookup.LookupList));
             ListItem itemProject = projects.GetItemById(ts_ProjectsLookupValue.LookupId);
             clientContext.Load(itemProject);
             clientContext.ExecuteQuery();
@@ -341,6 +364,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
 
             receiver.ReceiverName = receiverName;
             receiver.Synchronization = synch;
+            System.Diagnostics.Trace.TraceInformation(string.Format("Добавление ресивера '{0}' по URL '{1}'", receiver.ReceiverName, receiver.ReceiverUrl));
 
             //Add the new event receiver to a list in the host web
             list.EventReceivers.Add(receiver);
