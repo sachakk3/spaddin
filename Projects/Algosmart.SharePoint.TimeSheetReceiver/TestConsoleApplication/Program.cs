@@ -18,10 +18,10 @@ namespace TestConsoleApplication
             
 
             Guid listId = new Guid("{593FDB18-601F-4FB1-87C1-D74F9C8C0687}");
-            int listItemId = 35;
-            //new RemoteEventReceiverManager().ItemHandleListEventHandler(context, listId, listItemId, SPRemoteEventType.ItemAdded);
+            int listItemId = 94;
+            new RemoteEventReceiverManager().ItemHandleListEventHandler(context, listId, listItemId, SPRemoteEventType.ItemAdded);
             //new RemoteEventReceiverManager().AssociateRemoteEventsToHostWeb(context);
-            new RemoteEventReceiverManager().RemoveEventReceiversFromHostWeb(context);
+            //new RemoteEventReceiverManager().RemoveEventReceiversFromHostWeb(context);
         }
         private static ClientContext GetO365Context(string url, string userName, string password)
         {

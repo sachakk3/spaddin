@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
@@ -11,23 +12,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
 {
     public class RemoteEventReceiverManager
     {
-        //Опц: Вынести в класс Const.*
-        private const string LIST_TITLE = "Записи табеля";
         
-        private const string RECEIVER_ADDED_NAME = "ItemAddedEvent";
-        private const string RECEIVER_UPDATED_NAME = "ItemUpdatedEvent";
-
-        private const string GROUPS_OWNER_TITLE = "Backoffice - Владельцы";
-        private const string GROUPS_BOSS_TITLE = "Backoffice-Boss";
-
-        private const string WEBS_FINANCE_NAME = "/Finance";
-        private const string LISTS_RATES_TITLE = "UserByProjectDetails";
-        
-        private const string FIELDS_PROJECTS_LOOKUP = "ts_ProjectsLookup";
-        private const string FIELDS_AUTHOR = "Author";
-        private const string FIELDS_TIMEBOARD_STATUS = "ts_TimeboardStatus";
-        private const string FIELDS_INTERNAL_NAME = "ts_InternalName";
-        private const string FIELDS_RATE = "ts_Rate";
 
         public void ItemHandleListEventHandler(ClientContext clientContext, Guid ListId, int ListItemId, SPRemoteEventType eventType)
         {
@@ -40,10 +25,10 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
                 clientContext.Load(item);
                 clientContext.ExecuteQuery();
 
-                FieldLookupValue ts_ProjectsLookup = item[FIELDS_PROJECTS_LOOKUP] as FieldLookupValue;
+                FieldLookupValue ts_ProjectsLookup = item[Constants.FIELDS_PROJECTS_LOOKUP] as FieldLookupValue;
                 if (ts_ProjectsLookup != null)
                 {
-                    FieldUserValue userCreated = item[FIELDS_AUTHOR] as FieldUserValue;
+                    FieldUserValue userCreated = item[Constants.FIELDS_AUTHOR] as FieldUserValue;
                     Web parentWeb = GetParentWeb(clientContext);
                     string projectInternalName = GetProjectInternalName(clientContext, parentWeb, timeSheets, ts_ProjectsLookup);
                     if (!string.IsNullOrEmpty(projectInternalName))
@@ -59,35 +44,41 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
 
                         if (projectFolder.IsNew || userFolder.IsNew)
                         {
-                            SetPermissions(clientContext, timeSheets, projectFolder, userFolder, projectInternalName);
+                            SetPermissions(clientContext, timeSheets, projectFolder, userFolder, projectInternalName, userCreated.Email);
                         }
                         MoveItem(clientContext, timeSheets, item, folderUrlFull);
                         if (eventType == SPRemoteEventType.ItemAdded)
                         {
                             string rate = GetRateFromRatesList(clientContext, parentWeb, ts_ProjectsLookup, userCreated);
-                            double rateNumber = double.Parse(rate);
-                            item[FIELDS_RATE] = rateNumber;
+                            if (!string.IsNullOrEmpty(rate))
+                            {
+                                item[Constants.FIELDS_RATE] = rate;                                
+                                Trace.TraceInformation("Элементу установлена ставка '{0}'", rate);                                
+                            }
+                            else {
+                                Trace.TraceInformation("Для проекта '{0}', пользователю '{1}' ставка не установлена", ts_ProjectsLookup.LookupValue, userCreated.LookupValue);
+                            }
                             item.Update();
                         }
                         if (eventType == SPRemoteEventType.ItemUpdated)
                         {
-                            if (item[FIELDS_TIMEBOARD_STATUS] + "" == "Утверждено")
+                            if (item[Constants.FIELDS_TIMEBOARD_STATUS] + "" == "Утверждено")
                             {
                                 Microsoft.SharePoint.Client.RecordsRepository.Records.DeclareItemAsRecord(clientContext, item);
+                                Trace.TraceInformation("Элемент объявлен запеисью '{0}'", item["Title"]);
                             }
-                        }
-                        
+                        }                        
                         clientContext.ExecuteQuery();
                     }
                     else
                     {
-                        //Пишем в лог ошибку
+                        Trace.TraceError("Для проекта '{0}' не указано internalName", ts_ProjectsLookup.LookupValue);
                     }                   
                 }
             }
-            catch (Exception oops)
+            catch (Exception ex)
             {
-                System.Diagnostics.Trace.WriteLine(oops.Message);
+                Trace.TraceError(ex.ToString());
             }
 
         }
@@ -104,13 +95,13 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
         private static string GetRateFromRatesList(ClientContext clientContext, Web parentWeb, FieldLookupValue ts_ProjectsLookup, FieldUserValue userCreated)
         {
             string rate = string.Empty;
-            Web web = clientContext.Site.OpenWeb(parentWeb.ServerRelativeUrl + WEBS_FINANCE_NAME);
-            List detailsList = web.Lists.GetByTitle(LISTS_RATES_TITLE);
+            Web web = clientContext.Site.OpenWeb(parentWeb.ServerRelativeUrl + Constants.WEBS_FINANCE_NAME);
+            List detailsList = web.Lists.GetByTitle(Constants.LISTS_RATES_TITLE);
             CamlQuery query = new CamlQuery();
             query.ViewXml = "<View>"
                                 + "<Query><Where>"
                                     + "<And>"
-                                        + "<Eq><FieldRef Name='" + FIELDS_PROJECTS_LOOKUP + "' LookupId='TRUE'/>"
+                                        + "<Eq><FieldRef Name='" + Constants.FIELDS_PROJECTS_LOOKUP + "' LookupId='TRUE'/>"
                                             + "<Value Type='Lookup'>"
                                                 + ts_ProjectsLookup.LookupId
                                             + "</Value>"
@@ -131,12 +122,13 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
             if (items.Count > 0)
             {
                 ListItem itemDetails = items[0];
-                rate = itemDetails[FIELDS_RATE] + "";
+                rate = itemDetails[Constants.FIELDS_RATE] + "";
             }
             return rate;
         }
         private static List<SPTSFolder> InitializeFolders(string projectInternalName, string userName)
         {
+            Trace.TraceInformation("Формирование структуры папок для проекта '{0}' и пользователя '{1}'", projectInternalName, userName);
             SPTSFolder projectFolder = new SPTSFolder
             {
                 Name = projectInternalName,
@@ -158,8 +150,9 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
         }
         private static void EnsureFolders(ClientContext clientContext, List list, List<SPTSFolder> folders, string folderUrlFull)
         {
+            Trace.TraceInformation("Проверка наличия папок по пути '{0}'", folderUrlFull);
             Folder itemFolder = clientContext.Web.GetFolderByServerRelativeUrl(folderUrlFull);
-            if (!itemFolder.ExistsInList(list))
+            if (!itemFolder.ExistsInList(list))            
             {
                 CreateFolders(clientContext, list, folders);
             }
@@ -167,14 +160,15 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
         private static void CreateFolders(ClientContext clientContext, List list, List<SPTSFolder> folders)
         {
             string curParentFolderPath = list.RootFolder.ServerRelativeUrl;
-
             foreach (SPTSFolder folder in folders)
             {
-                Folder folderObj = clientContext.Web.GetFolderByServerRelativeUrl(list.RootFolder.ServerRelativeUrl + "/" + folder.ListRelativeURL);
+                Folder folderObj = clientContext.Web.GetFolderByServerRelativeUrl(list.RootFolder.ServerRelativeUrl + "/" + folder.ListRelativeURL);                
                 if (!folderObj.ExistsInList(list))
                 {
+                    Trace.TraceInformation("Создание папки по пути '{0}'", curParentFolderPath + "/" + folder.Name);
                     ListItemCreationInformation listItemCreationInformation = new ListItemCreationInformation();
                     listItemCreationInformation.UnderlyingObjectType = FileSystemObjectType.Folder;
+                    listItemCreationInformation.LeafName = folder.Name;
                     listItemCreationInformation.FolderUrl = curParentFolderPath;
                     folder.IsNew = true;
                     folder.Folder = list.AddItem(listItemCreationInformation);
@@ -200,6 +194,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
         }
         private static void MoveItem(ClientContext clientContext, List timeSheets, ListItem item, string folderUrlFull)
         {
+            Trace.TraceInformation("Перемещение элемента '{0}'", item["Title"]);
             string folderUrlItem = item["FileDirRef"] + "";
             if (folderUrlFull.ToLower() != folderUrlItem.ToLower())
             {
@@ -214,38 +209,44 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
                 }
                 clientContext.Load(file);
                 clientContext.ExecuteQuery();
+                Trace.TraceInformation("Элемент перемещен в '{0}'", folderUrlFull);
             }
         }
-        private static void SetPermissions(ClientContext clientContext, List list, SPTSFolder projectFolder, SPTSFolder userFolder, string projectInternalName)
+        private static void SetPermissions(ClientContext clientContext, List list, SPTSFolder projectFolder, SPTSFolder userFolder, string projectInternalName, string userEmail)
         {
             string prjPMGroupName = string.Format("{0}-PM", projectInternalName);
             string prjTeamGroupName = string.Format("{0}-Team", projectInternalName);
 
+            Trace.TraceInformation("Получение всех групп");
             GroupCollection groups = clientContext.Web.SiteGroups;
             clientContext.Load(groups);
             clientContext.ExecuteQuery();
 
-            Group groupOwner = groups.Where(g => g.Title.ToLower() == GROUPS_OWNER_TITLE.ToLower()).FirstOrDefault();
-            Group groupBoss = groups.Where(g => g.Title.ToLower() == GROUPS_BOSS_TITLE.ToLower()).FirstOrDefault();
+            Group groupOwner = groups.Where(g => g.Title.ToLower() == Constants.GROUPS_OWNER_TITLE.ToLower()).FirstOrDefault();
+            Group groupBoss = groups.Where(g => g.Title.ToLower() == Constants.GROUPS_BOSS_TITLE.ToLower()).FirstOrDefault();
 
             Group groupPM = groups.Where(g => g.Title.ToLower() == prjPMGroupName.ToLower()).FirstOrDefault();
             Group groupTeam = groups.Where(g => g.Title.ToLower() == prjTeamGroupName.ToLower()).FirstOrDefault();
 
             if (groupPM == null)
             {
+                Trace.TraceInformation("Создание группы '{0}'", prjPMGroupName);
                 groupPM = Helper.CreateGroup(clientContext, prjPMGroupName);
             }
             if (groupTeam == null)
             {
+                Trace.TraceInformation("Создание группы '{0}'", prjTeamGroupName);
                 groupTeam = Helper.CreateGroup(clientContext, prjTeamGroupName);
             }
             if (projectFolder.IsNew)
             {
+                Trace.TraceInformation("Назначение прав на группу '{0}'", projectFolder.ListRelativeURL);
                 SetPermissionsForProjectFolder(clientContext, projectFolder, groupPM, groupTeam, groupOwner, groupBoss);
             }
             if (userFolder.IsNew)
             {
-                SetPermissionsForUserFolder(clientContext, userFolder, groupPM, groupTeam, groupOwner, groupBoss);
+                Trace.TraceInformation("Назначение прав на группу '{0}'", userFolder.ListRelativeURL);
+                SetPermissionsForUserFolder(clientContext, userFolder, groupPM, userEmail, groupOwner, groupBoss);
             }
         }
         private static void SetPermissionsForProjectFolder(ClientContext clientContext, SPTSFolder folder, Group groupPM, Group groupTeam, Group groupOwner, Group groupBoss)
@@ -275,7 +276,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
                 folder.Folder.RoleAssignments[i].DeleteObject();
             }
         }
-        private static void SetPermissionsForUserFolder(ClientContext clientContext, SPTSFolder folder, Group groupPM, Group groupTeam, Group groupOwner, Group groupBoss)
+        private static void SetPermissionsForUserFolder(ClientContext clientContext, SPTSFolder folder, Group groupPM, string userEmail, Group groupOwner, Group groupBoss)
         {
             RemoveAllRoleAssignments(clientContext, folder);
 
@@ -284,55 +285,54 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
             RoleDefinitionBindingCollection collRoleBossDefinitionBinding = Helper.GetRoleContribute(clientContext);
             folder.Folder.RoleAssignments.Add(groupBoss, collRoleBossDefinitionBinding);
 
+            Principal user = clientContext.Web.EnsureUser(userEmail);
             RoleDefinitionBindingCollection collRoleDefinitionBinding = Helper.GetRoleContribute(clientContext);
             folder.Folder.RoleAssignments.Add(groupPM, collRoleDefinitionBinding);
-            folder.Folder.RoleAssignments.Add(groupTeam, collRoleDefinitionBinding);
+            folder.Folder.RoleAssignments.Add(user, collRoleDefinitionBinding);
             clientContext.ExecuteQuery();
         }
         private static string GetProjectInternalName(ClientContext clientContext, Web parentWeb, List timeSheets, FieldLookupValue ts_ProjectsLookupValue)
         {
-            FieldLookup ts_ProjectsLookup = (FieldLookup)timeSheets.Fields.Where(f => f.InternalName == FIELDS_PROJECTS_LOOKUP).FirstOrDefault();
+            FieldLookup ts_ProjectsLookup = (FieldLookup)timeSheets.Fields.Where(f => f.InternalName == Constants.FIELDS_PROJECTS_LOOKUP).FirstOrDefault();
             
             List projects = parentWeb.Lists.GetById(new Guid(ts_ProjectsLookup.LookupList));
             ListItem itemProject = projects.GetItemById(ts_ProjectsLookupValue.LookupId);
             clientContext.Load(itemProject);
             clientContext.ExecuteQuery();
-            return itemProject[FIELDS_INTERNAL_NAME] + "";
+            return itemProject[Constants.FIELDS_INTERNAL_NAME] + "";
         }
         public void AssociateRemoteEventsToHostWeb(ClientContext clientContext)
-        {
-            //Get the Title and EventReceivers lists
+        {            
             clientContext.Load(clientContext.Web.Lists,
                 lists => lists.Include(
                     list => list.Title,
                     list => list.EventReceivers).Where
-                        (list => list.Title == LIST_TITLE));
+                        (list => list.Title == Constants.LIST_TITLE));
 
             clientContext.ExecuteQuery();
 
             List timeSheetList = clientContext.Web.Lists.FirstOrDefault();
 
-            if (!IsReseiverExists(timeSheetList, RECEIVER_ADDED_NAME))
+            if (!IsReseiverExists(timeSheetList, Constants.RECEIVER_ADDED_NAME))
             {
-                this.AddReceiverToList(timeSheetList, RECEIVER_ADDED_NAME, EventReceiverType.ItemAdded, EventReceiverSynchronization.Asynchronous);
+                this.AddReceiverToList(timeSheetList, Constants.RECEIVER_ADDED_NAME, EventReceiverType.ItemAdded, EventReceiverSynchronization.Asynchronous);
             }
-            if (!IsReseiverExists(timeSheetList, RECEIVER_UPDATED_NAME))
+            if (!IsReseiverExists(timeSheetList, Constants.RECEIVER_UPDATED_NAME))
             {
-                this.AddReceiverToList(timeSheetList, RECEIVER_UPDATED_NAME, EventReceiverType.ItemUpdated, EventReceiverSynchronization.Asynchronous);
+                this.AddReceiverToList(timeSheetList, Constants.RECEIVER_UPDATED_NAME, EventReceiverType.ItemUpdated, EventReceiverSynchronization.Asynchronous);
             }
             clientContext.ExecuteQuery();
         }
-
         public void RemoveEventReceiversFromHostWeb(ClientContext clientContext)
         {
-            List myList = clientContext.Web.Lists.GetByTitle(LIST_TITLE);
+            List myList = clientContext.Web.Lists.GetByTitle(Constants.LIST_TITLE);
             clientContext.Load(myList, p => p.EventReceivers);
             clientContext.ExecuteQuery();
 
             var rerAdded = myList.EventReceivers.Where(
-                e => e.ReceiverName == RECEIVER_ADDED_NAME).FirstOrDefault();
+                e => e.ReceiverName == Constants.RECEIVER_ADDED_NAME).FirstOrDefault();
             var rerUpdated = myList.EventReceivers.Where(
-                e => e.ReceiverName == RECEIVER_UPDATED_NAME).FirstOrDefault();
+                e => e.ReceiverName == Constants.RECEIVER_UPDATED_NAME).FirstOrDefault();
             try
             {
                 if (rerAdded != null)

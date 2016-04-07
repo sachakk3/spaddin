@@ -3,7 +3,7 @@
 <App xmlns="http://schemas.microsoft.com/sharepoint/2012/app/manifest"
      Name="AlgosmartSharePointTimeSheetReceiver"
      ProductID="{dbfca524-792b-48ac-a5d8-c4b0f27e9a17}"
-     Version="1.0.0.2"
+     Version="1.0.1.0"
      SharePointMinVersion="16.0.0.0"
 >
   <Properties>
@@ -18,6 +18,6 @@
   </AppPrincipal>
   <AppPermissionRequests AllowAppOnlyPolicy="true">
     <AppPermissionRequest Scope="http://sharepoint/content/sitecollection/web" Right="FullControl" />
-    <AppPermissionRequest Scope="http://sharepoint/content/sitecollection" Right="Read" />
+    <AppPermissionRequest Scope="http://sharepoint/content/sitecollection" Right="FullControl" />
   </AppPermissionRequests>
 </App>

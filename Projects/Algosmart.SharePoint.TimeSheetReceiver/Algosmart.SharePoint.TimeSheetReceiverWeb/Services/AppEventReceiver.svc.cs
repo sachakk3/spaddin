@@ -92,19 +92,14 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Services
         }
         private void HandleTimeSheetEvents(SPRemoteEventProperties properties)
         {
-            using (ClientContext clientContext = TokenHelper.CreateRemoteEventReceiverClientContext(properties))
+
+            string webUrl = properties.ItemEventProperties.WebUrl;
+            Uri webUri = new Uri(webUrl);
+            string realm = TokenHelper.GetRealmFromTargetUrl(webUri);
+            string accessToken = TokenHelper.GetAppOnlyAccessToken(TokenHelper.SharePointPrincipal, webUri.Authority, realm).AccessToken;
+            using (var context = TokenHelper.GetClientContextWithAccessToken(webUrl, accessToken))
             {
-                if (clientContext != null)
-                {
-                    //var afterProperties = properties.ItemEventProperties.AfterProperties;
-                    //var beforeProperties = properties.ItemEventProperties.BeforeProperties;
-
-                    //if (Helper.ShouldSecretBeUpdated(beforeProperties, afterProperties))
-                    //{
-                        new RemoteEventReceiverManager().ItemHandleListEventHandler(clientContext, properties.ItemEventProperties.ListId, properties.ItemEventProperties.ListItemId, properties.EventType);
-
-                   // }
-                }
+                new RemoteEventReceiverManager().ItemHandleListEventHandler(context, properties.ItemEventProperties.ListId, properties.ItemEventProperties.ListItemId, properties.EventType);
             }
         }
     }

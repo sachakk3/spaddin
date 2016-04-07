@@ -188,6 +188,7 @@
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Code\Constants.cs" />
     <Compile Include="Code\FolderType.cs" />
     <Compile Include="Code\Helper.cs" />
     <Compile Include="Code\RemoteEventReceiverManager.cs" />
@@ -215,6 +216,10 @@
     <Content Include="Scripts\bootstrap.min.js" />
     <None Include="Properties\PublishProfiles\AddInMVC - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\AddInMVC - Web Deploy.pubxml" />
+    <None Include="Properties\PublishProfiles\algosmart-premiumit-backoffice - FTP.pubxml" />
+    <None Include="Properties\PublishProfiles\algosmart-premiumit-backoffice - Web Deploy.pubxml" />
+    <None Include="Properties\PublishProfiles\backoffice-test-deploy - FTP.pubxml" />
+    <None Include="Properties\PublishProfiles\backoffice-test-deploy - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\FTP for BackOffice.pubxml" />
     <None Include="Properties\PublishProfiles\Local.pubxml" />
     <None Include="Properties\PublishProfiles\PremiumIT-BackOffice - FTP.pubxml" />
