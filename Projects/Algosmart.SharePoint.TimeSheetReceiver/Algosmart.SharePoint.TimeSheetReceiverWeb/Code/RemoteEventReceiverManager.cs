@@ -17,7 +17,9 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
         public void ItemHandleListEventHandler(ClientContext clientContext, Guid ListId, int ListItemId, SPRemoteEventType eventType)
         {
             try
-            {                
+            {
+                Trace.TraceInformation(string.Format("Начата обработка элемента ID-'{0}'", ListItemId));
+
                 List timeSheets = clientContext.Web.Lists.GetById(ListId);
                 ListItem item = timeSheets.GetItemById(ListItemId);
                 clientContext.Load(timeSheets.RootFolder);
@@ -44,7 +46,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
 
                         if (projectFolder.IsNew || userFolder.IsNew)
                         {
-                            SetPermissions(clientContext, timeSheets, projectFolder, userFolder, projectInternalName, userCreated.Email);
+                            SetPermissions(clientContext, timeSheets, projectFolder, userFolder, projectInternalName, userCreated.LookupId);
                         }
                         MoveItem(clientContext, timeSheets, item, folderUrlFull);
                         if (eventType == SPRemoteEventType.ItemAdded)
@@ -73,8 +75,9 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
                     else
                     {
                         Trace.TraceError("Для проекта '{0}' не указано internalName", ts_ProjectsLookup.LookupValue);
-                    }                   
+                    }                                    
                 }
+                Trace.TraceInformation(string.Format("Окончена обработка элемента ID-'{0}'", ListItemId));
             }
             catch (Exception ex)
             {
@@ -212,7 +215,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
                 Trace.TraceInformation("Элемент перемещен в '{0}'", folderUrlFull);
             }
         }
-        private static void SetPermissions(ClientContext clientContext, List list, SPTSFolder projectFolder, SPTSFolder userFolder, string projectInternalName, string userEmail)
+        private static void SetPermissions(ClientContext clientContext, List list, SPTSFolder projectFolder, SPTSFolder userFolder, string projectInternalName, int userId)
         {
             string prjPMGroupName = string.Format("{0}-PM", projectInternalName);
             string prjTeamGroupName = string.Format("{0}-Team", projectInternalName);
@@ -246,7 +249,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
             if (userFolder.IsNew)
             {
                 Trace.TraceInformation("Назначение прав на группу '{0}'", userFolder.ListRelativeURL);
-                SetPermissionsForUserFolder(clientContext, userFolder, groupPM, userEmail, groupOwner, groupBoss);
+                SetPermissionsForUserFolder(clientContext, userFolder, groupPM, userId, groupOwner, groupBoss);
             }
         }
         private static void SetPermissionsForProjectFolder(ClientContext clientContext, SPTSFolder folder, Group groupPM, Group groupTeam, Group groupOwner, Group groupBoss)
@@ -276,7 +279,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
                 folder.Folder.RoleAssignments[i].DeleteObject();
             }
         }
-        private static void SetPermissionsForUserFolder(ClientContext clientContext, SPTSFolder folder, Group groupPM, string userEmail, Group groupOwner, Group groupBoss)
+        private static void SetPermissionsForUserFolder(ClientContext clientContext, SPTSFolder folder, Group groupPM, int userId, Group groupOwner, Group groupBoss)
         {
             RemoveAllRoleAssignments(clientContext, folder);
 
@@ -285,7 +288,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
             RoleDefinitionBindingCollection collRoleBossDefinitionBinding = Helper.GetRoleContribute(clientContext);
             folder.Folder.RoleAssignments.Add(groupBoss, collRoleBossDefinitionBinding);
 
-            Principal user = clientContext.Web.EnsureUser(userEmail);
+            Principal user = clientContext.Web.SiteUsers.GetById(userId);
             RoleDefinitionBindingCollection collRoleDefinitionBinding = Helper.GetRoleContribute(clientContext);
             folder.Folder.RoleAssignments.Add(groupPM, collRoleDefinitionBinding);
             folder.Folder.RoleAssignments.Add(user, collRoleDefinitionBinding);
@@ -338,10 +341,13 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
                 if (rerAdded != null)
                 {
                     rerAdded.DeleteObject();
+                    Trace.TraceInformation(string.Format("Удален ресивер '{0}'", Constants.RECEIVER_ADDED_NAME));
                 }
                 if (rerUpdated != null)
                 {
                     rerUpdated.DeleteObject();
+                    Trace.TraceInformation(string.Format("Удален ресивер '{0}'", Constants.RECEIVER_UPDATED_NAME));
+
                 }
                 clientContext.ExecuteQuery();
 
@@ -364,7 +370,8 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
 
             receiver.ReceiverName = receiverName;
             receiver.Synchronization = synch;
-            System.Diagnostics.Trace.TraceInformation(string.Format("Добавление ресивера '{0}' по URL '{1}'", receiver.ReceiverName, receiver.ReceiverUrl));
+            receiver.SequenceNumber = 1000;
+            Trace.TraceInformation(string.Format("Добавление ресивера '{0}' по URL '{1}'", receiver.ReceiverName, receiver.ReceiverUrl));
 
             //Add the new event receiver to a list in the host web
             list.EventReceivers.Add(receiver);

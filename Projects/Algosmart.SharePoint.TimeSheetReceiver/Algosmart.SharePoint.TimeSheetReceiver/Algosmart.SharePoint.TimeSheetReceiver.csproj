@@ -22,7 +22,7 @@
     <WorkflowPartId>{5b158e1e-b67a-4213-8fbc-fe86e016c28a}</WorkflowPartId>
     <CspkgPartId>{e1a02234-447a-4230-9f1b-88fdfb802e1d}</CspkgPartId>
     <SqlPackagePartId>{d02eed11-9c5d-4450-85a6-0596d9d9732d}</SqlPackagePartId>
-    <ActivePublishProfile>Local</ActivePublishProfile>
+    <ActivePublishProfile>backoffice-test-deploy - Web Deploy</ActivePublishProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>

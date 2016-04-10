@@ -17,7 +17,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Services
         /// <returns>Holds information returned from the app event.</returns>
         public SPRemoteEventResult ProcessEvent(SPRemoteEventProperties properties)
         {
-            System.Diagnostics.Trace.TraceInformation(string.Format("Начата обработка события '{0}'", properties.EventType));
+            System.Diagnostics.Trace.TraceInformation(string.Format("ProcessEvent. Начата обработка события '{0}'", properties.EventType));
             SPRemoteEventResult result = new SPRemoteEventResult();
             try
             {
@@ -28,9 +28,9 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Services
                         break;
                     case SPRemoteEventType.AppUninstalling:
                         HandleAppUninstalling(properties);
-                        break;
+                        break;               
                 }
-                System.Diagnostics.Trace.TraceInformation(string.Format("Окончена обработка события '{0}'", properties.EventType));
+                System.Diagnostics.Trace.TraceInformation(string.Format("ProcessEvent. Окончена обработка события '{0}'", properties.EventType));
 
             }
             catch (Exception ex)
@@ -46,21 +46,23 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Services
         /// <param name="properties">Unused.</param>
         public void ProcessOneWayEvent(SPRemoteEventProperties properties)
         {
-            System.Diagnostics.Trace.TraceInformation(string.Format("Начата обработка события '{0}'", properties.EventType));
+            System.Diagnostics.Trace.TraceInformation(string.Format("ProcessOneWayEvent. Начата обработка события '{0}'", properties.EventType));
 
             try
             {
-                switch (properties.EventType)
+                lock (LockObject.IsLocked)
                 {
-
-                    case SPRemoteEventType.ItemAdded:
-                        HandleTimeSheetEvents(properties);
-                        break;
-                    case SPRemoteEventType.ItemUpdated:
-                        HandleTimeSheetEvents(properties);
-                        break;
+                    switch (properties.EventType)
+                    {
+                        case SPRemoteEventType.ItemAdded:
+                            HandleTimeSheetEvents(properties);
+                            break;
+                        case SPRemoteEventType.ItemUpdated:
+                            HandleTimeSheetEvents(properties);
+                            break;
+                    }
                 }
-                System.Diagnostics.Trace.TraceInformation(string.Format("Окончена обработка события '{0}'", properties.EventType));
+                System.Diagnostics.Trace.TraceInformation(string.Format("ProcessOneWayEvent. Окончена обработка события '{0}'", properties.EventType));
 
             }
             catch (Exception ex)

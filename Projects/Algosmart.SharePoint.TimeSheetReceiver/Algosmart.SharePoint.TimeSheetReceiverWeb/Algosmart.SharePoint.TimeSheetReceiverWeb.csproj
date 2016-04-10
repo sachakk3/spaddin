@@ -191,6 +191,7 @@
     <Compile Include="Code\Constants.cs" />
     <Compile Include="Code\FolderType.cs" />
     <Compile Include="Code\Helper.cs" />
+    <Compile Include="Code\LockObject.cs" />
     <Compile Include="Code\RemoteEventReceiverManager.cs" />
     <Compile Include="Code\SPTSFolder.cs" />
     <Compile Include="Controllers\HomeController.cs" />
