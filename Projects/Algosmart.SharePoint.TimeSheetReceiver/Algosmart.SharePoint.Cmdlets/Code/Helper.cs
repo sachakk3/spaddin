@@ -21,5 +21,36 @@ namespace Algosmart.SharePoint.Cmdlets.Code
             context.ExecuteQuery();
             return context;
         }
+        public static RoleDefinitionBindingCollection GetRoleContribute(ClientContext clientContext)
+        {
+            RoleDefinitionBindingCollection collRolePMDefinitionBinding = new RoleDefinitionBindingCollection(clientContext);
+            //set role type
+            collRolePMDefinitionBinding.Add(clientContext.Web.RoleDefinitions.GetByType(RoleType.Contributor));
+            return collRolePMDefinitionBinding;
+        }
+        public static RoleDefinitionBindingCollection GetRoleReader(ClientContext clientContext)
+        {
+            RoleDefinitionBindingCollection collRoleDefinitionBinding = new RoleDefinitionBindingCollection(clientContext);
+            //set role type
+            collRoleDefinitionBinding.Add(clientContext.Web.RoleDefinitions.GetByType(RoleType.Reader));
+            return collRoleDefinitionBinding;
+        }
+        public static RoleDefinitionBindingCollection GetRoleFullControl(ClientContext clientContext)
+        {
+            RoleDefinitionBindingCollection collRoleDefinitionBinding = new RoleDefinitionBindingCollection(clientContext);
+            //set role type
+            collRoleDefinitionBinding.Add(clientContext.Web.RoleDefinitions.GetByType(RoleType.Administrator));
+            return collRoleDefinitionBinding;
+        }
+        public static Group CreateGroup(ClientContext clientContext, string groupName)
+        {
+            GroupCreationInformation inform = new GroupCreationInformation();
+            inform.Title = groupName;
+            Group group = clientContext.Web.SiteGroups.Add(inform);
+            clientContext.Load(group);
+            clientContext.ExecuteQuery();
+            return group;
+        }
+
     }
 }

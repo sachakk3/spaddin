@@ -17,7 +17,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Services
         /// <returns>Holds information returned from the app event.</returns>
         public SPRemoteEventResult ProcessEvent(SPRemoteEventProperties properties)
         {
-            System.Diagnostics.Trace.TraceInformation(string.Format("ProcessEvent. Начата обработка события '{0}'", properties.EventType));
+            System.Diagnostics.Trace.TraceInformation(string.Format("ProcessEvent. Начата обработка события '{0}'. Corelation Id - '{1}'", properties.EventType,properties.CorrelationId));
             SPRemoteEventResult result = new SPRemoteEventResult();
             try
             {
@@ -30,7 +30,7 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Services
                         HandleAppUninstalling(properties);
                         break;               
                 }
-                System.Diagnostics.Trace.TraceInformation(string.Format("ProcessEvent. Окончена обработка события '{0}'", properties.EventType));
+                System.Diagnostics.Trace.TraceInformation(string.Format("ProcessEvent. Окончена обработка события '{0}'. Corelation Id - '{1}'", properties.EventType, properties.CorrelationId));
 
             }
             catch (Exception ex)
@@ -46,8 +46,8 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Services
         /// <param name="properties">Unused.</param>
         public void ProcessOneWayEvent(SPRemoteEventProperties properties)
         {
-            System.Diagnostics.Trace.TraceInformation(string.Format("ProcessOneWayEvent. Начата обработка события '{0}'", properties.EventType));
-
+            //System.Diagnostics.Trace.TraceInformation(string.Format("ProcessOneWayEvent. Начата обработка события '{0}', ID-'{1}'", properties.EventType, properties.ItemEventProperties.ListItemId));
+            System.Diagnostics.Trace.TraceInformation(string.Format("ProcessOneWayEvent. Начата обработка события '{0}'. Corelation Id - '{1}'", properties.EventType, properties.CorrelationId));
             try
             {
                 lock (LockObject.IsLocked)
@@ -62,13 +62,13 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Services
                             break;
                     }
                 }
-                System.Diagnostics.Trace.TraceInformation(string.Format("ProcessOneWayEvent. Окончена обработка события '{0}'", properties.EventType));
-
+                System.Diagnostics.Trace.TraceInformation(string.Format("ProcessOneWayEvent. Окончена обработка события '{0}'. Corelation Id - '{1}'", properties.EventType, properties.CorrelationId));
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Trace.TraceError(ex.ToString());
             }
+            //System.Diagnostics.Trace.TraceInformation(string.Format("ProcessOneWayEvent. Окончена обработка события '{0}', ID-'{1}'", properties.EventType, properties.ItemEventProperties.ListItemId));
         }
         private void HandleAppInstalled(SPRemoteEventProperties properties)
         {

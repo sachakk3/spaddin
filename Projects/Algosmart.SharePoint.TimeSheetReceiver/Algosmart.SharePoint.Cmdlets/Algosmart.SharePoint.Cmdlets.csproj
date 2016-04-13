@@ -54,17 +54,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cmdlets\UpdateProjects.cs" />
+    <Compile Include="Code\Constants.cs" />
     <Compile Include="Code\Helper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Algosmart.SharePoint.TimeSheetReceiverWeb\Algosmart.SharePoint.TimeSheetReceiverWeb.csproj">
-      <Project>{243c0cae-1596-4e3c-81c1-4b9c47d4ff92}</Project>
-      <Name>Algosmart.SharePoint.TimeSheetReceiverWeb</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
