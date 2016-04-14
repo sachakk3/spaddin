@@ -7,9 +7,6 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
 {
     public static class Constants
     {
-        public const string SYSTEM_USER_NAME = "Developer@algosmart.onmicrosoft.com";
-        public const string SYSTEM_USER_PASSWORD = "Rostov2016";
-
         public const string LIST_TITLE = "Записи табеля";
 
         public const string RECEIVER_ADDED_NAME = "ItemAddedEvent";
