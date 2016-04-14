@@ -21,12 +21,14 @@ namespace Algosmart.SharePoint.TimeSheetReceiverWeb.Code
 
         public const string WEBS_FINANCE_NAME = "/Finance";
         public const string LISTS_RATES_TITLE = "UserByProjectDetails";
+        public const string LISTS_PROJECTS_TITLE = "Проекты";
 
         public const string FIELDS_PROJECTS_LOOKUP = "ts_ProjectsLookup";
         public const string FIELDS_AUTHOR = "Author";
         public const string FIELDS_TIMEBOARD_STATUS = "ts_TimeboardStatus";
         public const string FIELDS_INTERNAL_NAME = "ts_InternalName";
         public const string FIELDS_RATE = "ts_Rate";
+        public const string FIELDS_TITLE = "Title";
 
         public const string FIELDS_PROJECTS_PM = "ts_ProjectManager";
         public const string FIELDS_PROJECTS_USERS = "ts_ProjectUsers";

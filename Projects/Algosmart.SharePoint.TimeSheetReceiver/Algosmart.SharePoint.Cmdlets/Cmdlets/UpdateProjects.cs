@@ -29,19 +29,23 @@ namespace Algosmart.SharePoint.Cmdlets
         }
         public void Update()
         {
-            ClientContext clientContext = Code.Helper.GetO365Context(this.ProjectSiteURL, this.Login, this.Password);
-
-            string listProjectsTitle = "Проекты";
-            Console.WriteLine(string.Format("Получение списка элементов", listProjectsTitle));
-            List timeSheets = clientContext.Web.Lists.GetByTitle(listProjectsTitle);
+            ClientContext clientContext = Code.Helper.GetO365Context(this.ProjectSiteURL, this.Login, this.Password);            
+            Console.WriteLine("Получение списка проектов");
+            List timeSheets = clientContext.Web.Lists.GetByTitle(Constants.LISTS_PROJECTS_TITLE);
             CamlQuery query = CamlQuery.CreateAllItemsQuery();
             ListItemCollection items = timeSheets.GetItems(query);
             Console.WriteLine("Получение всех групп");
             GroupCollection groups = clientContext.Web.SiteGroups;
-            clientContext.Load(groups); 
-            clientContext.Load(items);
+            clientContext.Load(groups);
+            clientContext.Load(items,
+                elements => elements.Include(
+                    item => item.HasUniqueRoleAssignments,
+                    item => item[Constants.FIELDS_TITLE],
+                    item => item[Constants.FIELDS_INTERNAL_NAME],
+                    item => item[Constants.FIELDS_PROJECTS_PM],
+                    item => item[Constants.FIELDS_PROJECTS_USERS]));
             clientContext.ExecuteQuery();
-
+            Console.WriteLine(string.Format("Отправлено на обработку '{0}' проектов",items.Count));
             Group groupOwner = groups.Where(g => g.Title.ToLower() == Constants.GROUPS_OWNER_TITLE.ToLower()).FirstOrDefault();
             Group groupBoss = groups.Where(g => g.Title.ToLower() == Constants.GROUPS_BOSS_TITLE.ToLower()).FirstOrDefault();
 
@@ -56,66 +60,88 @@ namespace Algosmart.SharePoint.Cmdlets
                 string projectInternalName = item[Constants.FIELDS_INTERNAL_NAME] + "";
                 if (!string.IsNullOrEmpty(projectInternalName))
                 {
-                    Console.WriteLine("Установка разрешений для элемента '{0}'", item["Title"]);
+                    Console.WriteLine("Установка разрешений для проекта '{0}'", item[Constants.FIELDS_TITLE]);
                     try
                     {
-                        SetPermissions(clientContext, item, projectInternalName, groups, groupOwner, groupBoss, groupHR, groupFin, groupBackOfficePM);
+                        SetPermissions(clientContext, item, projectInternalName, groupOwner, groupBoss, groupHR, groupFin, groupBackOfficePM);
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
-                        Console.WriteLine("Произошла ошибка установки разрешений для элемента '{0}'. Описание '{1}'", item["Title"], ex.Message);
+                        Console.WriteLine("Произошла ошибка установки разрешений для проекта '{0}'. Описание '{1}'", item[Constants.FIELDS_TITLE], ex.Message);
                     }
-                    }
-                else {
-                    Console.WriteLine("Для проекта '{0}' не указано  internalName", item["Title"]);
                 }
-            }
+                else
+                {
+                    Console.WriteLine("Для проекта '{0}' не указано  internalName", item[Constants.FIELDS_TITLE]);
+                }
+                Console.WriteLine("Завершена установка разрешений для проекта '{0}'", item[Constants.FIELDS_TITLE]);
+            }            
         }
-        private static void SetPermissions(ClientContext clientContext, ListItem item,string projectInternalName, GroupCollection groups, Group groupOwner, Group groupBoss, Group groupHR, Group groupFin, Group groupBackOfficePM)
+        private static void SetPermissions(ClientContext clientContext, ListItem item, string projectInternalName, Group groupOwner, Group groupBoss, Group groupHR, Group groupFin, Group groupBackOfficePM)
         {
             FieldUserValue projectManager = item[Constants.FIELDS_PROJECTS_PM] as FieldUserValue;
             FieldUserValue[] projectMembers = item[Constants.FIELDS_PROJECTS_USERS] as FieldUserValue[];
 
-
             string prjPMGroupName = string.Format("{0}-PM", projectInternalName);
             string prjTeamGroupName = string.Format("{0}-Team", projectInternalName);
 
+            Group groupPM = EnsureGroupAndMembers(clientContext, prjPMGroupName, projectManager);
+            Group groupTeam = EnsureGroupAndMembers(clientContext, prjTeamGroupName, projectMembers);
             
-            Group groupPM = groups.Where(g => g.Title.ToLower() == prjPMGroupName.ToLower()).FirstOrDefault();
-            Group groupTeam = groups.Where(g => g.Title.ToLower() == prjTeamGroupName.ToLower()).FirstOrDefault();
-
-            if (groupPM == null)
+            if (!item.HasUniqueRoleAssignments)
             {
-                Console.WriteLine("Создание группы '{0}'", prjPMGroupName);
-                groupPM = Helper.CreateGroup(clientContext, prjPMGroupName);
-                if (projectManager != null)
-                {
-                    User user = clientContext.Web.SiteUsers.GetById(projectManager.LookupId);
-                    groupPM.Users.AddUser(user);
-                }
-                else
-                {
-                    Console.WriteLine("Для проекта '{0}' не указан менеджер проекта", item["Title"]);
-                }
+                SetPermissionsForProjectFolder(clientContext, item, groupPM, groupTeam, groupOwner, groupBoss, groupHR, groupFin, groupBackOfficePM);
             }
-            if (groupTeam == null)
+        }
+        private static Group EnsureGroupAndMembers(ClientContext clientContext, string groupName, FieldUserValue[] users)
+        {
+            Group group = EnsureGroup(clientContext, groupName);
+
+            if (users != null)
             {
-                Console.WriteLine("Создание группы '{0}'", prjTeamGroupName);
-                groupTeam = Helper.CreateGroup(clientContext, prjTeamGroupName);
-                if (projectMembers != null)
+                foreach (FieldUserValue user in users)
                 {
-                    foreach (FieldUserValue member in projectMembers)
-                    {
-                        User user = clientContext.Web.SiteUsers.GetById(member.LookupId);
-                        groupTeam.Users.AddUser(user);
-                    }
+                    AddUserToGroup(clientContext, group, user.LookupId);
+                    Console.WriteLine("В группу '{0}' добавлен пользователь '{1}'", groupName, user.LookupValue);
                 }
-                else
-                {
-                    Console.WriteLine("Для проекта '{0}' не указаны участники проекта", item["Title"]);
-                }
-            }            
-            SetPermissionsForProjectFolder(clientContext, item, groupPM, groupTeam, groupOwner, groupBoss, groupHR, groupFin, groupBackOfficePM);
+                clientContext.ExecuteQuery();
+            }
+            else
+            {
+                Console.WriteLine("Нет пользователей для добавления в группу '{0}'.", groupName);
+            }
+            return group;
+        }
+        private static Group EnsureGroupAndMembers(ClientContext clientContext, string groupName, FieldUserValue user)
+        {
+            Group group = EnsureGroup(clientContext, groupName);
+
+            if (user != null)
+            {
+                AddUserToGroup(clientContext, group, user.LookupId);
+                clientContext.ExecuteQuery();
+                Console.WriteLine("В группу '{0}' добавлен пользователь '{1}'", groupName, user.LookupValue);                
+            }
+            else
+            {
+                Console.WriteLine("Нет пользователей для добавления в группу '{0}'.", groupName);
+            }
+            return group;
+        }
+        private static Group EnsureGroup(ClientContext clientContext, string groupName)
+        {
+            Group group = clientContext.Web.SiteGroups.Where(g => g.Title.ToLower() == groupName.ToLower()).FirstOrDefault();
+            if (group == null)
+            {                
+                group = Helper.CreateGroup(clientContext, groupName);
+                Console.WriteLine("Группа '{0}' добавлена", groupName);
+            }
+            else
+            {                
+                RemoveAllUsersFromGroup(clientContext, group);
+                Console.WriteLine("Из группы '{0}' удалены все пользователи", groupName);
+            }
+            return group;
         }
         private static void SetPermissionsForProjectFolder(ClientContext clientContext, ListItem item, Group groupPM, Group groupTeam, Group groupOwner, Group groupBoss, Group groupHR, Group groupFin, Group groupBackOfficePM)
         {
@@ -134,6 +160,25 @@ namespace Algosmart.SharePoint.Cmdlets
             item.RoleAssignments.Add(groupBackOfficePM, collRoleReaderDefinitionBinding);
             item.RoleAssignments.Add(groupTeam, collRoleReaderDefinitionBinding);
             clientContext.ExecuteQuery();
+        }
+        private static void AddUserToGroup(ClientContext clientContext, Group group, int userId)
+        {
+            User user = clientContext.Web.SiteUsers.GetById(userId);
+            group.Users.AddUser(user);
+        }
+        private static void RemoveAllUsersFromGroup(ClientContext clientContext, Group group)
+        {
+            UserCollection users = group.Users;
+            clientContext.Load(users);
+            clientContext.ExecuteQuery();
+            if (users.Count > 0)
+            {
+                for (int i = users.Count - 1; i >= 0; i--)
+                {
+                    users.Remove(users[i]);
+                }
+                clientContext.ExecuteQuery();
+            }
         }
         private static void RemoveAllRoleAssignments(ClientContext clientContext, ListItem item)
         {
