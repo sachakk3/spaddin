@@ -29,11 +29,11 @@ namespace Algosmart.SharePoint.Cmdlets
         }
         public void Update()
         {
-            ClientContext clientContext = Code.Helper.GetO365Context(this.ProjectSiteURL, this.Login, this.Password);            
+            ClientContext clientContext = Helper.GetO365Context(this.ProjectSiteURL, this.Login, this.Password);            
             Console.WriteLine("Получение списка проектов");
-            List timeSheets = clientContext.Web.Lists.GetByTitle(Constants.LISTS_PROJECTS_TITLE);
+            List projects = clientContext.Web.Lists.GetByTitle(Constants.LISTS_PROJECTS_TITLE);
             CamlQuery query = CamlQuery.CreateAllItemsQuery();
-            ListItemCollection items = timeSheets.GetItems(query);
+            ListItemCollection items = projects.GetItems(query);
             Console.WriteLine("Получение всех групп");
             GroupCollection groups = clientContext.Web.SiteGroups;
             clientContext.Load(groups);
@@ -88,10 +88,7 @@ namespace Algosmart.SharePoint.Cmdlets
             Group groupPM = EnsureGroupAndMembers(clientContext, prjPMGroupName, projectManager);
             Group groupTeam = EnsureGroupAndMembers(clientContext, prjTeamGroupName, projectMembers);
             
-            if (!item.HasUniqueRoleAssignments)
-            {
-                SetPermissionsForProjectFolder(clientContext, item, groupPM, groupTeam, groupOwner, groupBoss, groupHR, groupFin, groupBackOfficePM);
-            }
+            SetPermissionsForProjectFolder(clientContext, item, groupPM, groupTeam, groupOwner, groupBoss, groupHR, groupFin, groupBackOfficePM);            
         }
         private static Group EnsureGroupAndMembers(ClientContext clientContext, string groupName, FieldUserValue[] users)
         {
