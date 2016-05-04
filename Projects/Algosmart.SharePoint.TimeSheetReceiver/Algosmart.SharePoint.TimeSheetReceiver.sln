@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Algosmart.SharePoint.Cmdlet
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsoleApplication", "TestConsoleApplication\TestConsoleApplication.csproj", "{B50852AE-597A-49A5-8763-A8D8529267D0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Algosmart.Azure.WebJobs", "Algosmart.Azure.WebJobs\Algosmart.Azure.WebJobs.csproj", "{C84E2950-2D92-4B66-8603-6EBCD1DDAFF1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,10 @@ Global
 		{B50852AE-597A-49A5-8763-A8D8529267D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B50852AE-597A-49A5-8763-A8D8529267D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B50852AE-597A-49A5-8763-A8D8529267D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C84E2950-2D92-4B66-8603-6EBCD1DDAFF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C84E2950-2D92-4B66-8603-6EBCD1DDAFF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C84E2950-2D92-4B66-8603-6EBCD1DDAFF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C84E2950-2D92-4B66-8603-6EBCD1DDAFF1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
