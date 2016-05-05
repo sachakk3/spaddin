@@ -16,6 +16,10 @@ namespace Algosmart.SharePoint.Cmdlets
         [Parameter(Mandatory = true)]
         public string ProjectSiteURL { get; set; }
         [Parameter(Mandatory = true)]
+        public string ListTitle { get; set; }
+        [Parameter(Mandatory = false)]
+        public int ItemId = 0;
+        [Parameter(Mandatory = true)]
         public string Login { get; set; }
         [Parameter(Mandatory = true)]
         public string Password { get; set; }  
@@ -29,53 +33,88 @@ namespace Algosmart.SharePoint.Cmdlets
         }
         public void Update()
         {
-            ClientContext clientContext = Helper.GetO365Context(this.ProjectSiteURL, this.Login, this.Password);            
-            Console.WriteLine("Получение списка проектов");
-            List projects = clientContext.Web.Lists.GetByTitle(Constants.LISTS_PROJECTS_TITLE);
-            CamlQuery query = CamlQuery.CreateAllItemsQuery();
-            ListItemCollection items = projects.GetItems(query);
-            Console.WriteLine("Получение всех групп");
-            GroupCollection groups = clientContext.Web.SiteGroups;
-            clientContext.Load(groups);
-            clientContext.Load(items,
-                elements => elements.Include(
-                    item => item.HasUniqueRoleAssignments,
-                    item => item[Constants.FIELDS_TITLE],
-                    item => item[Constants.FIELDS_INTERNAL_NAME],
-                    item => item[Constants.FIELDS_PROJECTS_PM],
-                    item => item[Constants.FIELDS_PROJECTS_USERS]));
-            clientContext.ExecuteQuery();
-            Console.WriteLine(string.Format("Отправлено на обработку '{0}' проектов",items.Count));
-            Group groupOwner = groups.Where(g => g.Title.ToLower() == Constants.GROUPS_OWNER_TITLE.ToLower()).FirstOrDefault();
-            Group groupBoss = groups.Where(g => g.Title.ToLower() == Constants.GROUPS_BOSS_TITLE.ToLower()).FirstOrDefault();
-
-            Group groupHR = groups.Where(g => g.Title.ToLower() == Constants.GROUPS_HR_TITLE.ToLower()).FirstOrDefault();
-            Group groupFin = groups.Where(g => g.Title.ToLower() == Constants.GROUPS_Fin_TITLE.ToLower()).FirstOrDefault();
-            Group groupBackOfficePM = groups.Where(g => g.Title.ToLower() == Constants.GROUPS_PM_TITLE.ToLower()).FirstOrDefault();
-
-
-            foreach (ListItem item in items)
+            try
             {
+                ClientContext clientContext = Helper.GetO365Context(this.ProjectSiteURL, this.Login, this.Password);
+                Console.WriteLine(string.Format("Получение списка '{0}'", this.ListTitle));
+                List projects = clientContext.Web.Lists.GetByTitle(this.ListTitle);
+                CamlQuery query = GetCamlQueryById(ItemId);                
+                ListItemCollection items = projects.GetItems(query);
+                Console.WriteLine("Получение всех групп");
+                GroupCollection groups = clientContext.Web.SiteGroups;
+                clientContext.Load(groups);
+                clientContext.Load(items,
+                    elements => elements.Include(
+                        item => item.HasUniqueRoleAssignments,
+                        item => item[Constants.FIELDS_TITLE],
+                        item => item[Constants.FIELDS_INTERNAL_NAME],
+                        item => item[Constants.FIELDS_PROJECTS_PM],
+                        item => item[Constants.FIELDS_PROJECTS_USERS]));
+                clientContext.ExecuteQuery();
+                Console.WriteLine(string.Format("Отправлено на обработку '{0}' проектов", items.Count));
 
-                string projectInternalName = item[Constants.FIELDS_INTERNAL_NAME] + "";
-                if (!string.IsNullOrEmpty(projectInternalName))
+                Group groupOwner = groups.Where(g => g.Title.ToLower() == Constants.GROUPS_OWNER_TITLE.ToLower()).FirstOrDefault();
+                Group groupBoss = groups.Where(g => g.Title.ToLower() == Constants.GROUPS_BOSS_TITLE.ToLower()).FirstOrDefault();
+
+                Group groupHR = groups.Where(g => g.Title.ToLower() == Constants.GROUPS_HR_TITLE.ToLower()).FirstOrDefault();
+                Group groupFin = groups.Where(g => g.Title.ToLower() == Constants.GROUPS_Fin_TITLE.ToLower()).FirstOrDefault();
+                Group groupBackOfficePM = groups.Where(g => g.Title.ToLower() == Constants.GROUPS_PM_TITLE.ToLower()).FirstOrDefault();
+
+                if (groupOwner == null || groupBoss == null || groupHR == null || groupFin == null || groupBackOfficePM == null)
                 {
-                    Console.WriteLine("Установка разрешений для проекта '{0}'", item[Constants.FIELDS_TITLE]);
-                    try
-                    {
-                        SetPermissions(clientContext, item, projectInternalName, groupOwner, groupBoss, groupHR, groupFin, groupBackOfficePM);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine("Произошла ошибка установки разрешений для проекта '{0}'. Описание '{1}'", item[Constants.FIELDS_TITLE], ex.Message);
-                    }
+                    Console.WriteLine("Актуализация прервана. Не существует одной или нескольких групп: '{0}', '{1}', '{2}', '{3}', '{4}'", Constants.GROUPS_OWNER_TITLE, Constants.GROUPS_BOSS_TITLE, Constants.GROUPS_HR_TITLE, Constants.GROUPS_Fin_TITLE, Constants.GROUPS_PM_TITLE);
+                    return;
                 }
-                else
+                foreach (ListItem item in items)
                 {
-                    Console.WriteLine("Для проекта '{0}' не указано  internalName", item[Constants.FIELDS_TITLE]);
+
+                    string projectInternalName = item[Constants.FIELDS_INTERNAL_NAME] + "";
+                    if (!string.IsNullOrEmpty(projectInternalName))
+                    {
+                        Console.WriteLine("Установка разрешений для проекта '{0}'", item[Constants.FIELDS_TITLE]);
+                        try
+                        {
+                            SetPermissions(clientContext, item, projectInternalName, groupOwner, groupBoss, groupHR, groupFin, groupBackOfficePM);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Произошла ошибка установки разрешений для проекта ID-'{1}', название: '{0}'. Описание '{2}'", item[Constants.FIELDS_TITLE], item.Id, ex.Message);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Для проекта '{0}' не указано  internalName", item[Constants.FIELDS_TITLE]);
+                    }
+                    Console.WriteLine("Завершена установка разрешений для проекта '{0}'", item[Constants.FIELDS_TITLE]);
                 }
-                Console.WriteLine("Завершена установка разрешений для проекта '{0}'", item[Constants.FIELDS_TITLE]);
-            }            
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Что то пошло не так: '{0}'", ex.ToString());
+            }
+        }
+        private static CamlQuery GetCamlQueryById(int id)
+        {
+            CamlQuery query = null;
+            if (id == 0)
+            {
+                query = CamlQuery.CreateAllItemsQuery();
+            }
+            else
+            {
+                query = new CamlQuery();
+                query.ViewXml = "<View>"
+                                + "<Query>"
+                                    + "<Where>"
+                                        + "<Eq>"
+                                            + "<FieldRef Name='ID'/>"
+                                            + "<Value Type='Number'>" + id + "</Value>"
+                                        + "</Eq>"
+                                    + "</Where>"
+                                + "</Query>"
+                               + "</View>";
+            }
+            return query;
         }
         private static void SetPermissions(ClientContext clientContext, ListItem item, string projectInternalName, Group groupOwner, Group groupBoss, Group groupHR, Group groupFin, Group groupBackOfficePM)
         {
